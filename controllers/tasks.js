@@ -33,9 +33,31 @@ const getTask = async (req, res) => {
 
 const updateTask = async (req, res) => {
   try {
-      const { id: taskID } = req.params;
-      const { name, completed } = req.body;
-    const tasks = await TaskCollection.findOneAndUpdate({ _id: taskID },{name,completed},{new:true,runValidators:true});
+    const { id: taskID } = req.params;
+    const { name, completed } = req.body;
+    const tasks = await TaskCollection.findOneAndUpdate(
+      { _id: taskID },
+      { name, completed },
+      { new: true, runValidators: true }
+    );
+    if (!tasks) {
+      return res.status(404).json({ mssg: `No task with id : ${taskID}` });
+    }
+    res.status(200).json(tasks);
+  } catch (error) {
+    res.status(500).json(error);
+  }
+};
+
+const editTask = async (req, res) => {
+  try {
+    const { id: taskID } = req.params;
+    const { name, completed } = req.body;
+    const tasks = await TaskCollection.findOneAndUpdate(
+      { _id: taskID },
+      { name, completed },
+      { new: true, runValidators: true, overwrite: true }
+    );
     if (!tasks) {
       return res.status(404).json({ mssg: `No task with id : ${taskID}` });
     }
@@ -64,4 +86,5 @@ module.exports = {
   createTask,
   deleteTask,
   updateTask,
+  editTask,
 };
