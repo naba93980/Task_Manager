@@ -1,84 +1,65 @@
 const { TaskCollection } = require("../models/tasks");
+const asyncWrapper = require("../middleware/wrapper");
+const { createCustomError } = require("../error/custom-error");
+const createTask = asyncWrapper(async (req, res, next) => {
+  const task = await TaskCollection.create(req.body);
+  res.status(201).json(task);
+});
 
-const createTask = async (req, res) => {
-  try {
-    const task = await TaskCollection.create(req.body);
-    res.status(201).json(task);
-  } catch (error) {
-    res.status(500).json(error);
-  }
-};
+const getAllTasks = asyncWrapper(async (req, res, next) => {
+  const tasks = await TaskCollection.find({});
+  res.status(200).json(tasks);
+});
 
-const getAllTasks = async (req, res) => {
-  try {
-    const tasks = await TaskCollection.find({});
-    res.status(200).json(tasks);
-  } catch (error) {
-    res.status(500).json(error);
+const getTask = asyncWrapper(async (req, res, next) => {
+  const { id: taskID } = req.params;
+  const tasks = await TaskCollection.findOne({ _id: taskID });
+  if (!tasks) {
+    next(createCustomError(`No task with id : ${taskID}`, 404));
+    return;
   }
-};
+  res.status(200).json(tasks);
+});
 
-const getTask = async (req, res) => {
-  try {
-    const { id: taskID } = req.params;
-    const tasks = await TaskCollection.findOne({ _id: taskID });
-    if (!tasks) {
-      return res.status(404).json({ mssg: `No task with id : ${taskID}` });
-    }
-    res.status(200).json(tasks);
-  } catch (error) {
-    res.status(500).json(error);
+const updateTask = asyncWrapper(async (req, res, next) => {
+  const { id: taskID } = req.params;
+  const { name, completed } = req.body;
+  const tasks = await TaskCollection.findOneAndUpdate(
+    { _id: taskID },
+    { name, completed },
+    { new: true, runValidators: true }
+  );
+  if (!tasks) {
+    next(createCustomError(`No task with id : ${taskID}`, 404));
+    return;
   }
-};
+  res.status(200).json(tasks);
+});
 
-const updateTask = async (req, res) => {
-  try {
-    const { id: taskID } = req.params;
-    const { name, completed } = req.body;
-    const tasks = await TaskCollection.findOneAndUpdate(
-      { _id: taskID },
-      { name, completed },
-      { new: true, runValidators: true }
-    );
-    if (!tasks) {
-      return res.status(404).json({ mssg: `No task with id : ${taskID}` });
-    }
-    res.status(200).json(tasks);
-  } catch (error) {
-    res.status(500).json(error);
+const editTask = asyncWrapper(async (req, res) => {
+  const { id: taskID } = req.params;
+  const { name, completed } = req.body;
+  const tasks = await TaskCollection.findOneAndUpdate(
+    { _id: taskID },
+    { name, completed },
+    { new: true, runValidators: true, overwrite: true }
+  );
+  if (!tasks) {
+    next(createCustomError(`No task with id : ${taskID}`, 404));
+    return;
   }
-};
+  res.status(200).json(tasks);
+});
 
-const editTask = async (req, res) => {
-  try {
-    const { id: taskID } = req.params;
-    const { name, completed } = req.body;
-    const tasks = await TaskCollection.findOneAndUpdate(
-      { _id: taskID },
-      { name, completed },
-      { new: true, runValidators: true, overwrite: true }
-    );
-    if (!tasks) {
-      return res.status(404).json({ mssg: `No task with id : ${taskID}` });
-    }
-    res.status(200).json(tasks);
-  } catch (error) {
-    res.status(500).json(error);
+const deleteTask = asyncWrapper(async (req, res) => {
+  const { id: taskID } = req.params;
+  const tasks = await TaskCollection.findOneAndDelete({ _id: taskID });
+  if (!tasks) {
+    next(createCustomError(`No task with id : ${taskID}`, 404));
+    return;
   }
-};
-
-const deleteTask = async (req, res) => {
-  try {
-    const { id: taskID } = req.params;
-    const tasks = await TaskCollection.findOneAndDelete({ _id: taskID });
-    if (!tasks) {
-      return res.status(404).json({ mssg: `No task with id : ${taskID}` });
-    }
-    res.status(200).json(tasks);
-  } catch (error) {
-    res.status(500).json(error);
-  }
-};
+  res.status(200).json(tasks);
+});
 
 module.exports = {
   getAllTasks,
